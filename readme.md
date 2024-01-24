@@ -10,3 +10,6 @@ this takes two inputs, a `main` file and an `insert` file, then it
 
 # usage
 `python merge.py -h`
+
+# whats the point of this?
+[this is why i made this](why.md)
