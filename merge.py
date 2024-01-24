@@ -6,9 +6,9 @@ import random
 
 parser = argparse.ArgumentParser(
     description='Concatenate videos with FFMPEG, add "xfade" between segments.')
-parser.add_argument('-m', '--main', required=True)
+parser.add_argument('-m', '--main', required=True, description="Main video file or directory of video files. If directory, will operate on every file in that directory" )
 # mandatory
-parser.add_argument('-i', '--insert', required=True)
+parser.add_argument('-i', '--insert', required=True, description="Video file or directory of video files to insert at random into a main file. If directory, will pick a random file from that directory")
 parser.add_argument('-o', '--out_dir', default="done_clips/")
 
 args = parser.parse_args()
