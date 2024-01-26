@@ -6,10 +6,15 @@ import random
 
 parser = argparse.ArgumentParser(
     description='Concatenate videos with FFMPEG, add "xfade" between segments.')
-parser.add_argument('-m', '--main', required=True, description="Main video file or directory of video files. If directory, will operate on every file in that directory" )
+parser.add_argument('-m', '--main', required=True,
+                    help="Main video file or directory of video files. If directory, will operate on every file in that directory")
 # mandatory
-parser.add_argument('-i', '--insert', required=True, description="Video file or directory of video files to insert at random into a main file. If directory, will pick a random file from that directory")
+parser.add_argument('-i', '--insert', required=True,
+                    help="Video file or directory of video files to insert at random into a main file. If directory, will pick a random file from that directory")
 parser.add_argument('-o', '--out_dir', default="done_clips/")
+parser.add_argument('-webm', '--force_webm',
+                    action=argparse.BooleanOptionalAction, default=False,)
+
 
 args = parser.parse_args()
 
@@ -22,9 +27,7 @@ def listdir_nohidden(path):
 
 # if args.insert is a directory, pick a random file from that directory
 # if args.insert is a file, use that file
-if os.path.isdir(args.insert):
-    args.insert = os.path.join(args.insert, random.choice(
-        [f for f in os.listdir(args.insert) if not f.startswith('.')]))
+
 
 if os.path.isdir(args.main):
     # generate a list of all files (with full dir) in the directory that are not hidden
@@ -44,8 +47,15 @@ def main_process(args, custom_padding=1, insert_length=5):
     print("###", "starting")
     print("###\t", "main file", args.main)
     print("###\t", "insert file", args.insert)
+    if os.path.isdir(args.insert):
+        insert = os.path.join(args.insert, random.choice(
+            [f for f in os.listdir(args.insert) if not f.startswith('.')]))
+    else:
+        insert = args.insert
 
-    insert = VideoFileClip(args.insert)
+    print("###\t", "insert file", insert)
+
+    insert = VideoFileClip(insert)
     # get fps
     if insert.audio:
         insert.audio.set_fps(25)
@@ -59,6 +69,9 @@ def main_process(args, custom_padding=1, insert_length=5):
         clip.audio.set_fps(25)
 
     l = int(clip.duration)
+    if l < 4:
+        print("###\t", "main file too short", l)
+        return False
     print("###\t", "main file length", l)
     random_clip_cut_time = random.randint(l//4, (l//4)*3-1)
     # random_clip_cut_time = 2  # testing
@@ -96,15 +109,26 @@ if __name__ == "__main__":
         if os.path.isfile(args.out_dir+os.path.basename(args.main)):
             print("###\t", "skipping\t", main)
             continue
-        combined, insert, clip = main_process(args)
+        out = main_process(args)
+        if out:
+            combined, insert, clip = out
+        else:
+            print("###\t", "skipping\t", main, "error")
+            continue
         # combined.preview()
         lowest_fps = min([insert.fps, clip.fps])
         # get base filename of main file
         base_filename = os.path.basename(args.main)
+        print("###\t", "saving\t", "last_file.mp4")
         combined.write_videofile(
             args.out_dir+'last_file.mp4', fps=lowest_fps, verbose=False)
-        combined.write_videofile(
-            args.out_dir+base_filename, fps=lowest_fps, verbose=False)
+        print("###\t", "saving\t", args.out_dir+base_filename)
+        if args.force_webm:
+            combined.write_videofile(
+                args.out_dir+base_filename+".webm", fps=lowest_fps, verbose=False)
+        else:
+            combined.write_videofile(
+                args.out_dir+base_filename, fps=lowest_fps, verbose=False)
 
         print("###", "done")
     print("###", "all done")

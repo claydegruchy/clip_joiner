@@ -11,5 +11,9 @@ this takes two inputs, a `main` file and an `insert` file, then it
 # usage
 `python merge.py -h`
 
+eg: 
+- whole folder: `python3 merge.py -m main_clips/ -i insert_clips/`
+- single files: `python3 merge.py -m myfile.webm -i myinsert.mp4`
+
 # whats the point of this?
 [this is why i made this](why.md)

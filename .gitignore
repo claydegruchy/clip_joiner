@@ -1,5 +1,8 @@
 .DS_Store
+*.mp3
 
+
+4chan-downloader/
 insert_clips/*
 main_clips/*
 done_clips/*
