@@ -106,6 +106,9 @@ if __name__ == "__main__":
     for main in args.list:
         print("###\t", "starting clip\t", main)
         args.main = main
+        # if out_dir doesn't exist, create it
+        if not os.path.exists(args.out_dir):
+            os.makedirs(args.out_dir)
         if os.path.isfile(args.out_dir+os.path.basename(args.main)):
             print("###\t", "skipping\t", main)
             continue
