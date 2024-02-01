@@ -14,6 +14,8 @@ parser.add_argument('-i', '--insert', required=True,
 parser.add_argument('-o', '--out_dir', default="done_clips/")
 parser.add_argument('-webm', '--force_webm',
                     action=argparse.BooleanOptionalAction, default=False,)
+parser.add_argument('-s', '--skip_done',
+                    action=argparse.BooleanOptionalAction, default=False,)
 
 
 args = parser.parse_args()
@@ -122,9 +124,13 @@ if __name__ == "__main__":
         lowest_fps = min([insert.fps, clip.fps])
         # get base filename of main file
         base_filename = os.path.basename(args.main)
-        print("###\t", "saving\t", "last_file.mp4")
-        combined.write_videofile(
-            args.out_dir+'last_file.mp4', fps=lowest_fps, verbose=False)
+        if not args.skip_done:
+            print("###\t", "saving\t", "last_file.mp4")
+            combined.write_videofile(
+                args.out_dir+'last_file.mp4', fps=lowest_fps, verbose=False)
+        else:
+            print("###\t", "skipping\t", "last_file.mp4")
+
         print("###\t", "saving\t", args.out_dir+base_filename)
         if args.force_webm:
             combined.write_videofile(
