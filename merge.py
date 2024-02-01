@@ -111,9 +111,16 @@ if __name__ == "__main__":
         # if out_dir doesn't exist, create it
         if not os.path.exists(args.out_dir):
             os.makedirs(args.out_dir)
-        if os.path.isfile(args.out_dir+os.path.basename(args.main)):
-            print("###\t", "skipping\t", main)
+        base_filename = os.path.basename(args.main)
+        if args.force_webm:
+            base_filename += ".webm"
+
+        if os.path.isfile(args.out_dir+base_filename):
+            print("###\t", "file exists, skipping\t", main)
             continue
+        else:
+            print("###\t", "file does not exist, continuing\t",
+                  args.out_dir+base_filename, main)
         out = main_process(args)
         if out:
             combined, insert, clip = out
@@ -123,7 +130,7 @@ if __name__ == "__main__":
         # combined.preview()
         lowest_fps = min([insert.fps, clip.fps])
         # get base filename of main file
-        base_filename = os.path.basename(args.main)
+
         if not args.skip_done:
             print("###\t", "saving\t", "last_file.mp4")
             combined.write_videofile(
@@ -132,12 +139,11 @@ if __name__ == "__main__":
             print("###\t", "skipping\t", "last_file.mp4")
 
         print("###\t", "saving\t", args.out_dir+base_filename)
-        if args.force_webm:
-            combined.write_videofile(
-                args.out_dir+base_filename+".webm", fps=lowest_fps, verbose=False)
-        else:
-            combined.write_videofile(
-                args.out_dir+base_filename, fps=lowest_fps, verbose=False)
+
+        # combined.write_videofile(
+        #     args.out_dir+, fps=lowest_fps, verbose=False)
+        combined.write_videofile(
+            args.out_dir+base_filename, fps=lowest_fps, verbose=False)
 
         print("###", "done")
     print("###", "all done")
