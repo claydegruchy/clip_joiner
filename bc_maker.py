@@ -24,14 +24,20 @@ def join_videos(videoArr):
     # final_clip.write_videofile("my_concatenation.mp4")
 
 
-clips = "main_clips/bc/r-7.webm main_clips/bc/l-2.webm main_clips/bc/c-7.mp4"
+# clips = "main_clips/bc/c-7.mp4"
+
+
+linedClips = """main_clips/bc/r-7-ecbjricnrjveijhkdkkinfcbnbtfudh.webm
+main_clips/bc/l-2-ebcfnbgftvricljhnegukdjlrkirbfnn.webm
+main_clips/bc/c-7-dancinggirl.mp4"""
 
 
 left = None
 center = None
 right = None
 
-clips = [VideoFileClip(c) for c in clips.split(" ")]
+# clips = [VideoFileClip(c) for c in clips.split(" ")]
+clips = [VideoFileClip(c) for c in linedClips.split("\n")]
 print("###", [get_filename(c.filename) for c in clips])
 for filename in [get_filename(c.filename) for c in clips]:
     if filename.startswith("l-"):
@@ -47,20 +53,37 @@ for filename in [get_filename(c.filename) for c in clips]:
         if not right:
             right = clips.pop(0)
             continue
+    elif filename.startswith("a-"):
+        if not left:
+            left = clips.pop(0)
+            continue
+        if not center:
+            center = clips.pop(0)
+            continue
+        if not right:
+            right = clips.pop(0)
+            continue
 
 videos = [left, center, right]
+videos = [v for v in videos if v is not None]
 print("##", "length check 1")
 for idx, file in enumerate(videos):
     print("###", get_filename(file.filename), "duration", file.duration)
 
-shortest_drop = min([float(get_filename(c.filename).split(
-    "-")[1].split(".")[0]) for c in videos])
+
+shortest_drop = min([float(get_filename(v.filename).split("-")[1].split(".")[0])
+                    for v in videos if get_filename(v.filename).split("-")[1].split(".")[0] != "n"])
+
 
 for idx, file in enumerate(videos):
     print("\n##", "file", idx, file, get_filename(videos[idx].filename))
     length = float(videos[idx].duration)
-    drop = float(get_filename(
-        videos[idx].filename).split("-")[1].split(".")[0])
+    val = get_filename(videos[idx].filename).split("-")[1].split(".")[0]
+    print(val)
+    if val == "n":
+        drop = videos[idx].duration
+    else:
+        drop = float(val)
     # print("###", "length", videos[idx].duration, "drop@", drop)
     if drop > shortest_drop:
         diff = drop - shortest_drop
@@ -74,8 +97,24 @@ for idx, file in enumerate(videos):
     else:
         print("###", "no need to trim")
 
+# find the video with the shorted x
+# for idx, file in enumerate(videos):
+biggest_x = max(videos, key=lambda x: x.h).h
+biggest_y = max(videos, key=lambda x: x.w).w
+smallest_x = min(videos, key=lambda x: x.h).h
+smallest_y = min(videos, key=lambda x: x.w).w
+
+
+print("###", "smallest_x", smallest_x)
+
+for idx, file in enumerate(videos):
+    print("###", get_filename(file.filename), "size", file.size)
+    if file.h > smallest_x:
+        videos[idx] = videos[idx].resize(height=smallest_x)
+
 
 shortest = min(videos, key=lambda x: x.duration).duration
+# shortest = 3
 print("###", "shortest", shortest)
 for idx, file in enumerate(videos):
     videos[idx] = videos[idx].subclip(0, shortest)
@@ -89,10 +128,35 @@ lowest_fps = min([v.fps for v in videos])
 # join_videos(videos)
 final_clip = clips_array([videos])
 
+
+def addText(text, clip):
+    txt_clip = TextClip(text, fontsize=30, color='gray', transparent=True)
+
+    # setting position of text in the center and duration will be 10 seconds
+    txt_clip = txt_clip.set_position(
+        (0.3, 0.2), relative=True)
+    txt_clip = txt_clip.set_duration(clip.duration).set_fps(clip.fps)
+    txt_clip.set_ismask(True)
+    # Overlay the text clip on the first video clip
+    video = CompositeVideoClip([clip, txt_clip])
+    # return concatenate_videoclips([text_clip, clip])
+    return video
+
+
 print("###", final_clip.duration, lowest_fps)
 
+final_clip = addText("rip /bcg/", final_clip)
 
+# scale down to a max of 2048x2048px
+if final_clip.h > 2048:
+    final_clip = final_clip.resize(height=2048)
+if final_clip.w > 2048:
+    final_clip = final_clip.resize(width=2048)
+
+# exit()
 final_clip.write_videofile(outdir + "final.webm", codec="libvpx",
                            audio_codec='libvorbis',
                            fps=lowest_fps)
+# final_clip.write_videofile(outdir + "final.mp4",
+#                            fps=lowest_fps)
 print("###", "main file", "start")
