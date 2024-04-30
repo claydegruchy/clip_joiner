@@ -1,8 +1,10 @@
+
+
 # a python script that uses moviepy to join 3 videos together side by side
 from moviepy.editor import *
 import os
 
-outdir = "done_clips/"
+outdir = "done_clips/bc/"
 indir = "main_clips/bc/"
 
 
@@ -27,9 +29,15 @@ def join_videos(videoArr):
 # clips = "main_clips/bc/c-7.mp4"
 
 
-linedClips = """main_clips/bc/r-7-ecbjricnrjveijhkdkkinfcbnbtfudh.webm
-main_clips/bc/l-2-ebcfnbgftvricljhnegukdjlrkirbfnn.webm
-main_clips/bc/c-7-dancinggirl.mp4"""
+# linedClips = """main_clips/bc/r-7-ecbjricnrjveijhkdkkinfcbnbtfudh.webm
+# main_clips/bc/l-2-ebcfnbgftvricljhnegukdjlrkirbfnn.webm
+# main_clips/bc/c-7-dancinggirl.mp4"""
+
+linedClips = """main_clips/bc/c-1-8657187155864411810-jNnpIkZU.mp4
+main_clips/bc/s-4-1695305048419498.webm
+main_clips/bc/s-1-4 ch1.webm"""
+
+
 
 
 left = None
@@ -70,10 +78,14 @@ print("##", "length check 1")
 for idx, file in enumerate(videos):
     print("###", get_filename(file.filename), "duration", file.duration)
 
-
-shortest_drop = min([float(get_filename(v.filename).split("-")[1].split(".")[0])
-                    for v in videos if get_filename(v.filename).split("-")[1].split(".")[0] != "n"])
-
+try:
+    shortest_drop = min([float(get_filename(v.filename).split("-")[1].split(".")[0])
+                        for v in videos if get_filename(v.filename).split("-")[1].split(".")[0] != "n"])
+except:
+    shortest_drop = 999
+    for idx, file in enumerate(videos):
+        if file.duration < shortest_drop:
+            shortest_drop = file.duration
 
 for idx, file in enumerate(videos):
     print("\n##", "file", idx, file, get_filename(videos[idx].filename))
@@ -143,6 +155,23 @@ def addText(text, clip):
     return video
 
 
+def calculate_bitrate(max_filesize_kb, duration_seconds, framerate):
+    # Convert max filesize from KB to bits
+    max_filesize_bits = max_filesize_kb * 8 * 1024
+    
+    # Calculate maximum number of bits available for video data
+    max_video_bits = max_filesize_bits - (framerate * duration_seconds * 1000)
+    
+    # Calculate bitrate in kbps
+    bitrate_kbps = max_video_bits / duration_seconds / 1000
+    
+    # Adjust bitrate if it exceeds the maximum file size
+    if bitrate_kbps * duration_seconds * 1000 > max_video_bits:
+        bitrate_kbps = max_video_bits / (duration_seconds * 1000)
+    
+    return bitrate_kbps
+
+
 print("###", final_clip.duration, lowest_fps)
 
 final_clip = addText("rip /bcg/", final_clip)
@@ -153,10 +182,26 @@ if final_clip.h > 2048:
 if final_clip.w > 2048:
     final_clip = final_clip.resize(width=2048)
 
+name = [get_filename(v.filename).split(".")[0] for v in videos]
+name = [n.split("-")[-1][:4] for n in name]
+name = "-".join(name)+".webm"
+print(name)
+
+# calculate bitrate
+
+
+# Example usage
+filesize_kb = float(3500)  # give ourselves a gap
+bitrate = str(calculate_bitrate(filesize_kb, final_clip.duration,lowest_fps))+"k"
+print("Bitrate: {} kbps".format(bitrate))
+
+
 # exit()
-final_clip.write_videofile(outdir + "final.webm", codec="libvpx",
+final_clip.write_videofile(outdir + name, codec="libvpx",
                            audio_codec='libvorbis',
-                           fps=lowest_fps)
+                           fps=lowest_fps,                     threads='12', bitrate=bitrate,
+                           )
+
 # final_clip.write_videofile(outdir + "final.mp4",
 #                            fps=lowest_fps)
 print("###", "main file", "start")
